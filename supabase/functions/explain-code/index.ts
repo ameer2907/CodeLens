@@ -55,13 +55,19 @@ Rules for steps:
 - For loops, show the loop entry as one step and iterations as concept
 
 Rules for flowchart:
-- Use valid Mermaid.js "graph TD" syntax
-- Use simple node labels without special characters or quotes inside brackets
-- Node IDs should be simple letters/numbers like A, B, C
-- Use diamond shapes for conditions: C{condition}
-- Use rectangles for actions: A[action]
-- Use rounded for start/end: A([Start])
-- Keep it clean and readable, 5-15 nodes max`
+- Use valid Mermaid.js "graph TD" syntax ONLY
+- The flowchart field must be a single string with \\n for newlines
+- Node IDs: single uppercase letters A, B, C, D etc
+- Rectangles: A[Label text here]
+- Diamonds for conditions: C{Is x greater than 5}
+- Rounded for start/end: A([Start])  Z([End])
+- Arrows: --> for connections, -->|Yes| and -->|No| for labeled edges
+- NEVER use parentheses () inside square brackets []
+- NEVER use quotes inside node labels
+- NEVER use special characters like colons semicolons or backticks in labels
+- Keep labels short, max 6 words per node
+- Keep it clean: 5-12 nodes maximum
+- Example: "graph TD\\n    A([Start]) --> B[Initialize variables]\\n    B --> C{Check condition}\\n    C -->|Yes| D[Execute body]\\n    D --> C\\n    C -->|No| E([End])"`
           },
           {
             role: "user",
