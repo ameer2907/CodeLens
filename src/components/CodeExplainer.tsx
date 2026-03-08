@@ -342,9 +342,9 @@ const CodeExplainer = () => {
       </div>
 
       {/* Split layout */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
         {/* Left: Editor */}
-        <div className="w-1/2 border-r border-border relative">
+        <div className="w-full md:w-1/2 h-1/2 md:h-auto border-b md:border-b-0 md:border-r border-border relative">
           <div className="absolute inset-0 bg-mesh-gradient pointer-events-none" />
           <div className="relative z-10 h-full">
             <MonacoEditor
