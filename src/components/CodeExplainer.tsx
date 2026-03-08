@@ -363,25 +363,109 @@ const CodeExplainer = () => {
             {isLoading ? (
               <LoadingAnalysis />
             ) : !hasResults ? (
-              <div className="flex-1 flex items-center justify-center p-8">
+              <div className="flex-1 flex items-center justify-center p-8 relative overflow-hidden">
+                {/* Colorful ambient blobs for empty state */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center space-y-3"
-                >
-                  <motion.div
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: 300, height: 300, top: "5%", right: "5%", background: "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)", filter: "blur(50px)" }}
+                  animate={{ x: [0, 15, -10, 0], y: [0, -12, 8, 0], scale: [1, 1.05, 0.96, 1] }}
+                  transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: 250, height: 250, bottom: "10%", left: "8%", background: "radial-gradient(circle, hsl(var(--accent) / 0.10) 0%, transparent 70%)", filter: "blur(45px)" }}
+                  animate={{ x: [0, -12, 8, 0], y: [0, 10, -15, 0] }}
+                  transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                />
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: 200, height: 200, top: "40%", left: "50%", background: "radial-gradient(circle, hsl(var(--step-loop) / 0.08) 0%, transparent 70%)", filter: "blur(40px)" }}
+                  animate={{ x: [0, 10, -8, 0], y: [0, -8, 12, 0], scale: [1, 1.08, 0.95, 1] }}
+                  transition={{ duration: 16, repeat: Infinity, ease: "easeInOut", delay: 6 }}
+                />
+
+                {/* Floating code symbols */}
+                {[
+                  { char: "{}", x: "15%", y: "20%", delay: 0 },
+                  { char: "//", x: "78%", y: "25%", delay: 1.5 },
+                  { char: "=>", x: "22%", y: "72%", delay: 3 },
+                  { char: "[]", x: "75%", y: "70%", delay: 2 },
+                  { char: "()", x: "55%", y: "15%", delay: 4 },
+                ].map((sym, i) => (
+                  <motion.span
+                    key={i}
+                    className="absolute font-mono text-primary/[0.07] text-lg pointer-events-none select-none"
+                    style={{ left: sym.x, top: sym.y }}
+                    animate={{ y: [0, -10, 0], opacity: [0.05, 0.12, 0.05] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: sym.delay }}
                   >
-                    <Terminal className="w-8 h-8 text-primary" />
+                    {sym.char}
+                  </motion.span>
+                ))}
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6 }}
+                  className="text-center space-y-5 relative z-10"
+                >
+                  {/* AI avatar with glow */}
+                  <div className="relative mx-auto w-20 h-20">
+                    <motion.div
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      className="relative"
+                    >
+                      <motion.div
+                        animate={{ boxShadow: [
+                          "0 0 20px hsl(var(--primary) / 0.1), 0 0 40px hsl(var(--primary) / 0.05)",
+                          "0 0 30px hsl(var(--primary) / 0.2), 0 0 60px hsl(var(--primary) / 0.1)",
+                          "0 0 20px hsl(var(--primary) / 0.1), 0 0 40px hsl(var(--primary) / 0.05)",
+                        ]}}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 border border-primary/20 backdrop-blur-sm flex items-center justify-center"
+                      >
+                        <Bot className="w-10 h-10 text-primary" />
+                      </motion.div>
+                      {/* Pulse ring */}
+                      <motion.div
+                        className="absolute inset-0 rounded-2xl border-2 border-primary/15"
+                        animate={{ scale: [1, 1.35, 1.35], opacity: [0.5, 0, 0] }}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+                      />
+                    </motion.div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      Paste code & click Explain
+                    </h2>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                      Your AI tutor will walk you through every line with animations, flowcharts, and insights
+                    </p>
+                  </div>
+
+                  {/* Feature pills */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="flex items-center justify-center gap-2 flex-wrap"
+                  >
+                    {[
+                      { icon: Zap, label: "Walkthrough", color: "primary" },
+                      { icon: GitFork, label: "Flowchart", color: "accent" },
+                      { icon: TrendingUp, label: "Complexity", color: "primary" },
+                    ].map((item) => (
+                      <span
+                        key={item.label}
+                        className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-card/80 border border-border/60 text-muted-foreground"
+                      >
+                        <item.icon className="w-3 h-3 text-primary" />
+                        {item.label}
+                      </span>
+                    ))}
                   </motion.div>
-                  <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Paste code & click Explain
-                  </h2>
-                  <p className="text-sm text-muted-foreground max-w-xs">
-                    Get a guided walkthrough with execution timeline, flowchart, and complexity analysis
-                  </p>
                 </motion.div>
               </div>
             ) : (
