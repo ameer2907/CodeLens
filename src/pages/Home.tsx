@@ -69,15 +69,15 @@ const Home = () => {
           >
             <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/50 border-b border-border">
               <div className="w-3 h-3 rounded-full bg-destructive/60" />
-              <div className="w-3 h-3 rounded-full bg-amber-400/60" />
+              <div className="w-3 h-3 rounded-full bg-muted-foreground/40" />
               <div className="w-3 h-3 rounded-full bg-accent/60" />
               <span className="ml-2 text-xs text-muted-foreground font-mono">playground.py</span>
             </div>
             <div className="p-5 text-left font-mono text-sm text-foreground/80 leading-relaxed">
               <div><span className="text-primary">def</span> <span className="text-accent">binary_search</span>(arr, target):</div>
-              <div className="pl-4">low, high = <span className="text-amber-400">0</span>, len(arr) - <span className="text-amber-400">1</span></div>
+              <div className="pl-4">low, high = <span className="text-primary/70">0</span>, len(arr) - <span className="text-primary/70">1</span></div>
               <div className="pl-4"><span className="text-primary">while</span> low &lt;= high:</div>
-              <div className="pl-8">mid = (low + high) // <span className="text-amber-400">2</span></div>
+              <div className="pl-8">mid = (low + high) // <span className="text-primary/70">2</span></div>
               <div className="pl-8"><span className="text-primary">if</span> arr[mid] == target:</div>
               <div className="pl-12"><span className="text-primary">return</span> mid</div>
               <div className="pl-8 text-muted-foreground">...</div>
