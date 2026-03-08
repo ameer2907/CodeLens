@@ -357,7 +357,7 @@ const CodeExplainer = () => {
         </div>
 
         {/* Right: Results */}
-        <div className="w-1/2 flex flex-col min-h-0 relative">
+        <div className="w-full md:w-1/2 h-1/2 md:h-auto flex flex-col min-h-0 relative">
           <div className="absolute inset-0 bg-mesh-gradient pointer-events-none" />
           <div className="relative z-10 flex flex-col flex-1 min-h-0">
             {isLoading ? (
