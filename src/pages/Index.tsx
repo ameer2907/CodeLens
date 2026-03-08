@@ -3,7 +3,7 @@ import CodeExplainer from "@/components/CodeExplainer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background">
       <Navbar />
       <CodeExplainer />
     </div>

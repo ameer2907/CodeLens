@@ -27,15 +27,45 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: "You are a friendly coding tutor. When given code, explain it step-by-step in very simple language. Use numbered steps. Be concise but thorough. Do not use markdown formatting - just plain text with numbered steps."
+            content: `You are a code analysis engine. Given code in a specified language, return ONLY valid JSON (no markdown, no code fences) with this exact structure:
+{
+  "explanation": "A concise 2-3 sentence summary of what the code does overall.",
+  "steps": [
+    {
+      "step": 1,
+      "title": "Short title",
+      "lines": [1, 2],
+      "description": "What happens at this step",
+      "variables": { "varName": "value or description" },
+      "category": "initialization|condition|loop|function|output|return"
+    }
+  ],
+  "flowchart": "graph TD\\n    A[Start] --> B[Step]\\n    B --> C[End]"
+}
+
+Rules for steps:
+- Break code into logical execution steps (3-10 steps typically)
+- "lines" is an array of 1-indexed line numbers this step covers
+- "variables" shows variable state changes at that step (can be empty {})
+- "category" must be one of: initialization, condition, loop, function, output, return
+- For loops, show the loop entry as one step and iterations as concept
+
+Rules for flowchart:
+- Use valid Mermaid.js "graph TD" syntax
+- Use simple node labels without special characters or quotes inside brackets
+- Node IDs should be simple letters/numbers like A, B, C
+- Use diamond shapes for conditions: C{condition}
+- Use rectangles for actions: A[action]
+- Use rounded for start/end: A([Start])
+- Keep it clean and readable, 5-15 nodes max`
           },
           {
             role: "user",
-            content: `Explain the following ${language} code step by step:\n\n${code}`
+            content: `Analyze this ${language} code and return the JSON structure:\n\n${code}`
           },
         ],
       }),
@@ -56,9 +86,23 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const explanation = data.choices?.[0]?.message?.content || "No explanation generated.";
+    const rawContent = data.choices?.[0]?.message?.content || "";
+    
+    // Parse the JSON response, stripping any markdown fences
+    let parsed;
+    try {
+      const cleaned = rawContent.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Fallback if JSON parsing fails
+      parsed = {
+        explanation: rawContent,
+        steps: [],
+        flowchart: "graph TD\n    A([Start]) --> B([End])"
+      };
+    }
 
-    return new Response(JSON.stringify({ explanation }), {
+    return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

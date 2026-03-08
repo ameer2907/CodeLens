@@ -6,47 +6,47 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 222 47% 7%;
+    --foreground: 213 31% 91%;
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 217 33% 12%;
+    --card-foreground: 213 31% 91%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 217 33% 12%;
+    --popover-foreground: 213 31% 91%;
 
-    --primary: 142 71% 45%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 7%;
 
     --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 213 31% 91%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 55%;
 
     --accent: 142 71% 45%;
-    --accent-foreground: 222 47% 11%;
+    --accent-foreground: 222 47% 7%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 142 71% 45%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 217 91% 60%;
 
     --radius: 0.75rem;
 
     --terminal: 120 100% 80%;
-    --glow: 142 71% 45%;
+    --glow: 217 91% 60%;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 142 71% 45%;
-    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 222 47% 7%;
     --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 25%;
-    --sidebar-ring: 142 71% 45%;
+    --sidebar-accent-foreground: 213 31% 91%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -72,7 +72,7 @@
   }
 
   .terminal-panel {
-    background: hsl(222 47% 8%);
+    background: hsl(222 47% 5%);
     border: 1px solid hsl(var(--border));
     font-family: 'JetBrains Mono', monospace;
   }
@@ -81,6 +81,18 @@
     content: '▊';
     animation: blink 1s step-end infinite;
     color: hsl(var(--primary));
+  }
+
+  /* Monaco editor line highlighting */
+  .highlighted-line {
+    background: hsl(var(--primary) / 0.12) !important;
+    border-left: 3px solid hsl(var(--primary)) !important;
+  }
+
+  .highlighted-glyph {
+    background: hsl(var(--primary));
+    width: 3px !important;
+    margin-left: 3px;
   }
 
   @keyframes blink {
