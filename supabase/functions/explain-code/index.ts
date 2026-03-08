@@ -65,20 +65,25 @@ Rules for steps:
 - "category" must be one of: initialization, condition, loop, function, output, return
 - For loops, show the loop entry as one step and iterations as concept
 
-Rules for flowchart:
-- Use valid Mermaid.js "graph TD" syntax ONLY
+Rules for flowchart - FOLLOW EXACTLY:
+- MUST start with "graph TD\\n"
 - The flowchart field must be a single string with \\n for newlines
-- Node IDs: single uppercase letters A, B, C, D etc
-- Rectangles: A[Label text here]
-- Diamonds for conditions: C{Is x greater than 5}
-- Rounded for start/end: A([Start])  Z([End])
+- Node IDs: single uppercase letters A, B, C, D, E, F, G, H etc.
+- ONLY these node shapes are allowed:
+  - Rectangles: A[Label here]
+  - Diamonds: C{Is x greater than 5}
+  - Rounded start/end: A([Start]) or Z([End])
 - Arrows: --> for connections, -->|Yes| and -->|No| for labeled edges
-- NEVER use parentheses () inside square brackets []
-- NEVER use quotes inside node labels
-- NEVER use special characters like colons semicolons or backticks in labels
-- Keep labels short, max 6 words per node
-- Keep it clean: 5-12 nodes maximum
-- Example: "graph TD\\n    A([Start]) --> B[Initialize variables]\\n    B --> C{Check condition}\\n    C -->|Yes| D[Execute body]\\n    D --> C\\n    C -->|No| E([End])"
+- CRITICAL SYNTAX RULES - violating these causes render failures:
+  - NEVER put parentheses () inside square brackets []
+  - NEVER put quotes or backticks inside any node label
+  - NEVER use colons : or semicolons ; inside labels
+  - NEVER use special characters like @ # $ % & * inside labels
+  - Keep labels to simple words only, max 5 words per node
+  - NO markdown formatting inside labels
+- Keep it clean: 5-10 nodes maximum
+- ALWAYS include a Start and End node
+- Example: "graph TD\\n    A([Start]) --> B[Set variables]\\n    B --> C{Check condition}\\n    C -->|Yes| D[Run loop body]\\n    D --> C\\n    C -->|No| E[Print result]\\n    E --> F([End])"
 
 Rules for complexity:
 - timeComplexity and spaceComplexity should use Big-O notation
