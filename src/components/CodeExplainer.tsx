@@ -107,7 +107,7 @@ const CodeExplainer = () => {
       steps.forEach((s) => {
         const vars = s.variables ? Object.entries(s.variables).map(([k,v]) => `<code>${k} = ${v}</code>`).join(", ") : "";
         sections.push(`<div style="margin-bottom:12px;padding:12px;background:#1e293b;border-radius:8px;border-left:3px solid #60a5fa;">
-          <strong style="color:#60a5fa;">Step ${s.step}:</strong> <strong>${s.title}</strong> <span style="color:#94a3b8;font-size:12px;">[Line ${s.line}]</span>
+          <strong style="color:#60a5fa;">Step ${s.step}:</strong> <strong>${s.title}</strong> <span style="color:#94a3b8;font-size:12px;">[Lines ${s.lines?.join(", ") ?? ""}]</span>
           <p style="margin:4px 0 0;color:#cbd5e1;">${s.description}</p>
           ${vars ? `<p style="margin:4px 0 0;font-size:12px;color:#94a3b8;">Variables: ${vars}</p>` : ""}
         </div>`);
