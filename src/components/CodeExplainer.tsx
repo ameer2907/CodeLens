@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download, Bot, User, Code2, Repeat, GitBranch, Zap, Monitor, ArrowLeftRight } from "lucide-react";
+import { Play, Pause, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download, Bot, Code2, Repeat, GitBranch, Zap, Monitor, ArrowLeftRight, SkipForward, SkipBack, Gauge } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import ExampleSnippets from "./ExampleSnippets";
 import VariableTracker from "./VariableTracker";
 import ComplexityAnalysis from "./ComplexityAnalysis";
 import LoadingAnalysis from "./LoadingAnalysis";
+import KeywordTooltip from "./KeywordTooltip";
 
 const LANGUAGES = ["Python", "JavaScript", "Java", "C++", "TypeScript", "Go", "Rust", "Ruby"];
 
@@ -23,6 +24,12 @@ const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; 
   output: { icon: Monitor, color: "step-output", label: "Output" },
   return: { icon: ArrowLeftRight, color: "step-return", label: "Return" },
 };
+
+const SPEED_PRESETS = [
+  { label: "Slow", value: 3000, icon: "🐢" },
+  { label: "Normal", value: 1600, icon: "▶" },
+  { label: "Fast", value: 700, icon: "⚡" },
+];
 
 interface ComplexityData {
   timeComplexity: string;
@@ -44,7 +51,13 @@ const CodeExplainer = () => {
   const [activeTab, setActiveTab] = useState("explanation");
   const [activeStep, setActiveStep] = useState(0);
   const [revealedMessages, setRevealedMessages] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [speedIdx, setSpeedIdx] = useState(1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const speed = SPEED_PRESETS[speedIdx].value;
 
   useEffect(() => {
     const stored = sessionStorage.getItem("codelens-example");
@@ -67,7 +80,38 @@ const CodeExplainer = () => {
     setHighlightedLines([]);
     setActiveStep(0);
     setRevealedMessages(0);
+    setIsPlaying(false);
+    setIsPaused(false);
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
   };
+
+  // Sequentially reveal messages with configurable pacing
+  const startReveal = useCallback((stepsData: ExecutionStep[], startFrom = 0) => {
+    const totalMessages = stepsData.length + 1; // +1 for overview
+    let current = startFrom;
+
+    const revealNext = () => {
+      current++;
+      setRevealedMessages(current);
+
+      // Sync active step and highlights
+      const stepIdx = current - 2; // -1 for overview, -1 for 0-index
+      if (stepIdx >= 0 && stepIdx < stepsData.length) {
+        setActiveStep(stepIdx);
+        setHighlightedLines(stepsData[stepIdx]?.lines ?? []);
+      }
+
+      if (current < totalMessages) {
+        revealTimerRef.current = setTimeout(revealNext, speed);
+      } else {
+        setIsPlaying(false);
+      }
+    };
+
+    setIsPlaying(true);
+    setIsPaused(false);
+    revealTimerRef.current = setTimeout(revealNext, speed);
+  }, [speed]);
 
   const handleExplain = async () => {
     if (!code.trim()) return;
@@ -87,20 +131,17 @@ const CodeExplainer = () => {
       setFlowchart(data.flowchart || "");
       setComplexity(data.complexity || null);
 
-      // Conversational reveal: show messages one by one
       if (data.steps?.length) {
         setActiveTab("explanation");
-        // Reveal overview first, then steps sequentially
-        let i = 0;
-        const totalMessages = data.steps.length + 1; // +1 for the overview
-        const revealInterval = setInterval(() => {
-          i++;
-          setRevealedMessages(i);
-          if (i >= totalMessages) clearInterval(revealInterval);
-        }, 400);
+        // Show overview immediately, then start paced reveal
+        setRevealedMessages(1);
         if (data.steps[0]?.lines) {
           setHighlightedLines(data.steps[0].lines);
         }
+        // Start revealing after a short pause for the overview to be read
+        setTimeout(() => {
+          startReveal(data.steps, 1);
+        }, speed);
       }
     } catch (err: any) {
       setError(err.message || "Failed to get explanation. Please try again.");
@@ -109,10 +150,58 @@ const CodeExplainer = () => {
     }
   };
 
+  const handlePauseResume = () => {
+    if (isPlaying && !isPaused) {
+      // Pause
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      setIsPaused(true);
+      setIsPlaying(false);
+    } else if (isPaused) {
+      // Resume
+      startReveal(steps, revealedMessages);
+      setIsPaused(false);
+    }
+  };
+
+  const handleStepForward = () => {
+    const totalMessages = steps.length + 1;
+    if (revealedMessages < totalMessages) {
+      const next = revealedMessages + 1;
+      setRevealedMessages(next);
+      const stepIdx = next - 2;
+      if (stepIdx >= 0 && stepIdx < steps.length) {
+        setActiveStep(stepIdx);
+        setHighlightedLines(steps[stepIdx]?.lines ?? []);
+      }
+    }
+  };
+
+  const handleStepBack = () => {
+    if (revealedMessages > 1) {
+      const prev = revealedMessages - 1;
+      setRevealedMessages(prev);
+      const stepIdx = prev - 2;
+      if (stepIdx >= 0 && stepIdx < steps.length) {
+        setActiveStep(stepIdx);
+        setHighlightedLines(steps[stepIdx]?.lines ?? []);
+      } else {
+        setActiveStep(0);
+        setHighlightedLines(steps[0]?.lines ?? []);
+      }
+    }
+  };
+
   // Auto-scroll messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [revealedMessages]);
+
+  // Cleanup timer
+  useEffect(() => {
+    return () => {
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    };
+  }, []);
 
   const handleHighlightLines = useCallback((lines: number[]) => {
     setHighlightedLines(lines);
@@ -120,7 +209,6 @@ const CodeExplainer = () => {
 
   const handleStepChange = useCallback((stepIdx: number) => {
     setActiveStep(stepIdx);
-    // Sync highlight from timeline
     if (steps[stepIdx]?.lines) {
       setHighlightedLines(steps[stepIdx].lines);
     }
@@ -188,11 +276,20 @@ const CodeExplainer = () => {
   };
 
   const handleMessageClick = (stepIdx: number) => {
+    // Pause playback when user clicks a step
+    if (isPlaying) {
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      setIsPlaying(false);
+      setIsPaused(true);
+    }
     setActiveStep(stepIdx);
     handleHighlightLines(steps[stepIdx]?.lines ?? []);
   };
 
   const hasResults = explanation || steps.length > 0 || flowchart;
+  const totalMessages = steps.length + 1;
+  const allRevealed = revealedMessages >= totalMessages;
+  const showPlaybackControls = hasResults && steps.length > 0;
 
   return (
     <div className="flex flex-col h-[calc(100vh-57px)] relative">
@@ -307,8 +404,63 @@ const CodeExplainer = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="explanation" className="flex-1 overflow-y-auto m-0">
-                  <div className="p-5 space-y-3">
+                <TabsContent value="explanation" className="flex-1 overflow-hidden m-0 flex flex-col">
+                  {/* Walkthrough playback controls */}
+                  {showPlaybackControls && (
+                    <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border bg-card/30">
+                      <Button size="sm" variant="ghost" onClick={handleStepBack} disabled={revealedMessages <= 1} className="px-2 h-7">
+                        <SkipBack className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={isPlaying ? "default" : isPaused ? "outline" : "ghost"}
+                        onClick={handlePauseResume}
+                        disabled={allRevealed && !isPaused}
+                        className="gap-1.5 px-3 h-7 text-xs"
+                      >
+                        {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                        {isPlaying ? "Pause" : isPaused ? "Resume" : allRevealed ? "Done" : "Play"}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={handleStepForward} disabled={allRevealed} className="px-2 h-7">
+                        <SkipForward className="w-3.5 h-3.5" />
+                      </Button>
+
+                      {/* Progress indicator */}
+                      <div className="flex-1 mx-2">
+                        <div className="h-1 bg-muted rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full bg-primary rounded-full"
+                            animate={{ width: `${(revealedMessages / totalMessages) * 100}%` }}
+                            transition={{ duration: 0.5, ease: "easeOut" }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Speed selector */}
+                      <div className="flex items-center gap-1">
+                        <Gauge className="w-3 h-3 text-muted-foreground" />
+                        {SPEED_PRESETS.map((preset, i) => (
+                          <button
+                            key={preset.label}
+                            onClick={() => setSpeedIdx(i)}
+                            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                              i === speedIdx
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        {Math.min(revealedMessages, totalMessages)}/{totalMessages}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
                     {error && <p className="text-destructive text-sm">{error}</p>}
 
                     {/* AI Overview Message */}
@@ -316,7 +468,7 @@ const CodeExplainer = () => {
                       <motion.div
                         initial={{ opacity: 0, y: 16, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                         className="flex gap-3 items-start"
                       >
                         <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
@@ -324,7 +476,7 @@ const CodeExplainer = () => {
                         </div>
                         <div className="flex-1 min-w-0 rounded-2xl rounded-tl-md bg-card/80 border border-border/60 p-4 shadow-sm">
                           <p className="text-[13px] text-foreground leading-relaxed">
-                            {explanation}
+                            <KeywordTooltip text={explanation} />
                           </p>
                         </div>
                       </motion.div>
@@ -333,7 +485,7 @@ const CodeExplainer = () => {
                     {/* Conversational Step Messages */}
                     <AnimatePresence>
                       {steps.map((s, i) => {
-                        if (revealedMessages < i + 2) return null; // +2 because overview is message 1
+                        if (revealedMessages < i + 2) return null;
                         const config = CATEGORY_CONFIG[s.category] || CATEGORY_CONFIG.initialization;
                         const Icon = config.icon;
                         const isActive = i === activeStep;
@@ -341,30 +493,30 @@ const CodeExplainer = () => {
                         return (
                           <motion.div
                             key={s.step}
-                            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+                            initial={{ opacity: 0, y: 24, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ duration: 0.45, ease: "easeOut" }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
                             onClick={() => handleMessageClick(i)}
-                            className={`flex gap-3 items-start cursor-pointer group transition-all duration-200 ${
-                              isActive ? "" : "opacity-80 hover:opacity-100"
+                            className={`flex gap-3 items-start cursor-pointer group transition-all duration-300 ${
+                              isActive ? "" : "opacity-70 hover:opacity-100"
                             }`}
                           >
                             <motion.div
-                              animate={isActive ? { scale: [1, 1.08, 1] } : {}}
-                              transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
+                              animate={isActive ? { scale: [1, 1.1, 1] } : {}}
+                              transition={{ duration: 2.5, repeat: isActive ? Infinity : 0, ease: "easeInOut" }}
                               className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 step-dot-${s.category}`}
                             >
                               <Icon className="w-3.5 h-3.5 text-primary-foreground" />
                             </motion.div>
                             <div
-                              className={`flex-1 min-w-0 rounded-2xl rounded-tl-md p-4 transition-all duration-300 ${
+                              className={`flex-1 min-w-0 rounded-2xl rounded-tl-md p-4 transition-all duration-400 ${
                                 isActive
-                                  ? "bg-primary/[0.06] border border-primary/25 shadow-[0_0_12px_hsl(var(--primary)/0.08)]"
+                                  ? "bg-primary/[0.06] border border-primary/25 shadow-[0_0_16px_hsl(var(--primary)/0.08)]"
                                   : "bg-card/60 border border-border/40 hover:bg-card/80 hover:border-border/60"
                               }`}
                             >
                               {/* Header */}
-                              <div className="flex items-center gap-2 mb-1.5">
+                              <div className="flex items-center gap-2 mb-2">
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium step-dot-${s.category} text-primary-foreground`}>
                                   {config.label}
                                 </span>
@@ -377,23 +529,18 @@ const CodeExplainer = () => {
                                   </span>
                                 )}
                               </div>
-                              <h4 className="text-[13px] font-semibold text-foreground mb-1">{s.title}</h4>
-                              <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
-
-                              {/* Inline code snippet hint */}
-                              {s.lines.length > 0 && (
-                                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
-                                  <Code2 className="w-3 h-3" />
-                                  <span>Lines {s.lines.join(", ")}</span>
-                                </div>
-                              )}
+                              <h4 className="text-[13px] font-semibold text-foreground mb-1.5">{s.title}</h4>
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                <KeywordTooltip text={s.description} />
+                              </p>
 
                               {/* Variable badges */}
                               {Object.keys(s.variables).length > 0 && (
                                 <motion.div
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
-                                  className="mt-2.5 flex flex-wrap gap-1.5"
+                                  transition={{ delay: 0.2 }}
+                                  className="mt-3 flex flex-wrap gap-1.5"
                                 >
                                   {Object.entries(s.variables).map(([k, v]) => (
                                     <span key={k} className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
@@ -409,7 +556,7 @@ const CodeExplainer = () => {
                     </AnimatePresence>
 
                     {/* Typing indicator while revealing */}
-                    {revealedMessages > 0 && revealedMessages < steps.length + 1 && (
+                    {isPlaying && revealedMessages > 0 && revealedMessages < totalMessages && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -419,10 +566,10 @@ const CodeExplainer = () => {
                           <Bot className="w-3.5 h-3.5 text-muted-foreground" />
                         </div>
                         <div className="rounded-2xl rounded-tl-md bg-card/60 border border-border/40 px-4 py-3">
-                          <div className="flex gap-1">
-                            <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0 }} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                            <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0.2 }} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                            <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: 0.4 }} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                          <div className="flex gap-1.5">
+                            <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0 }} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                            <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                            <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }} className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
                           </div>
                         </div>
                       </motion.div>
