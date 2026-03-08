@@ -1,15 +1,17 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Play, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download } from "lucide-react";
+import { Play, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import MonacoEditor from "./MonacoEditor";
 import ExecutionTimeline, { type ExecutionStep } from "./ExecutionTimeline";
 import FlowchartPanel from "./FlowchartPanel";
 import ExampleSnippets from "./ExampleSnippets";
 import VariableTracker from "./VariableTracker";
 import ComplexityAnalysis from "./ComplexityAnalysis";
+import LoadingAnalysis from "./LoadingAnalysis";
 
 const LANGUAGES = ["Python", "JavaScript", "Java", "C++", "TypeScript", "Go", "Rust", "Ruby"];
 
@@ -32,6 +34,20 @@ const CodeExplainer = () => {
   const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState("explanation");
   const [activeStep, setActiveStep] = useState(0);
+  const [revealedSteps, setRevealedSteps] = useState(0);
+
+  // Pick up example from sessionStorage (from Examples page)
+  useEffect(() => {
+    const stored = sessionStorage.getItem("codelens-example");
+    if (stored) {
+      try {
+        const { code: c, language: l } = JSON.parse(stored);
+        setCode(c);
+        setLanguage(l);
+      } catch {}
+      sessionStorage.removeItem("codelens-example");
+    }
+  }, []);
 
   const clearResults = () => {
     setExplanation("");
@@ -41,6 +57,7 @@ const CodeExplainer = () => {
     setError("");
     setHighlightedLines([]);
     setActiveStep(0);
+    setRevealedSteps(0);
   };
 
   const handleExplain = async () => {
@@ -61,8 +78,15 @@ const CodeExplainer = () => {
       setFlowchart(data.flowchart || "");
       setComplexity(data.complexity || null);
 
+      // Animate step reveal
       if (data.steps?.length) {
         setActiveTab("timeline");
+        let i = 0;
+        const revealInterval = setInterval(() => {
+          i++;
+          setRevealedSteps(i);
+          if (i >= data.steps.length) clearInterval(revealInterval);
+        }, 200);
       }
     } catch (err: any) {
       setError(err.message || "Failed to get explanation. Please try again.");
@@ -179,9 +203,10 @@ const CodeExplainer = () => {
             className="gap-1.5"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Analyzing…
-              </>
+              <motion.div className="flex items-center gap-1.5" animate={{ opacity: [0.5, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}>
+                <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                Analyzing…
+              </motion.div>
             ) : (
               <>
                 <Play className="w-3.5 h-3.5" /> Explain Code
@@ -205,9 +230,15 @@ const CodeExplainer = () => {
 
         {/* Right: Results */}
         <div className="w-1/2 flex flex-col min-h-0">
-          {!hasResults && !isLoading ? (
+          {isLoading ? (
+            <LoadingAnalysis />
+          ) : !hasResults ? (
             <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center space-y-3">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center space-y-3"
+              >
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                   <Terminal className="w-8 h-8 text-primary" />
                 </div>
@@ -215,7 +246,7 @@ const CodeExplainer = () => {
                 <p className="text-sm text-muted-foreground max-w-xs">
                   Get step-by-step execution timeline, flowchart, variable tracking, and complexity analysis
                 </p>
-              </div>
+              </motion.div>
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
@@ -239,83 +270,72 @@ const CodeExplainer = () => {
 
               <TabsContent value="explanation" className="flex-1 overflow-y-auto m-0">
                 <div className="p-6">
-                  {isLoading && (
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <span className="text-sm">Analyzing your code…</span>
-                    </div>
-                  )}
                   {error && <p className="text-destructive text-sm">{error}</p>}
                   {explanation && (
-                    <div className="terminal-panel rounded-xl p-5">
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="terminal-panel rounded-xl p-5"
+                    >
                       <pre className="text-sm text-foreground whitespace-pre-wrap leading-relaxed font-mono">
                         {explanation}
                       </pre>
-                    </div>
+                    </motion.div>
                   )}
                   {steps.length > 0 && (
                     <div className="mt-6 space-y-3">
                       <h3 className="text-sm font-medium text-muted-foreground">Detailed Steps</h3>
-                      {steps.map((s) => (
-                        <div key={s.step} className="terminal-panel rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-mono text-primary">Step {s.step}</span>
-                            <span className="text-xs font-medium text-foreground">{s.title}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
-                        </div>
-                      ))}
+                      <AnimatePresence>
+                        {steps.map((s, i) => (
+                          <motion.div
+                            key={s.step}
+                            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                            animate={{ opacity: i < revealedSteps || revealedSteps >= steps.length ? 1 : 0, y: 0, scale: 1 }}
+                            transition={{ duration: 0.4, delay: i * 0.05 }}
+                            className="terminal-panel rounded-lg p-4 hover:border-primary/30 transition-all cursor-pointer"
+                            onClick={() => handleHighlightLines(s.lines)}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-mono text-primary">Step {s.step}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{s.category}</span>
+                              <span className="text-xs font-medium text-foreground">{s.title}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
+                            {Object.keys(s.variables).length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {Object.entries(s.variables).map(([k, v]) => (
+                                  <span key={k} className="text-[11px] font-mono px-2 py-0.5 rounded bg-primary/10 text-primary">
+                                    {k} = {v}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
                     </div>
                   )}
                 </div>
               </TabsContent>
 
               <TabsContent value="timeline" className="flex-1 overflow-hidden m-0">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="text-sm">Building execution timeline…</span>
-                  </div>
-                ) : (
-                  <ExecutionTimeline
-                    steps={steps}
-                    onHighlightLines={handleHighlightLines}
-                    onStepChange={handleStepChange}
-                  />
-                )}
+                <ExecutionTimeline
+                  steps={steps}
+                  onHighlightLines={handleHighlightLines}
+                  onStepChange={handleStepChange}
+                />
               </TabsContent>
 
               <TabsContent value="flowchart" className="flex-1 overflow-hidden m-0">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="text-sm">Generating flowchart…</span>
-                  </div>
-                ) : (
-                  <FlowchartPanel chart={flowchart} />
-                )}
+                <FlowchartPanel chart={flowchart} />
               </TabsContent>
 
               <TabsContent value="variables" className="flex-1 overflow-hidden m-0">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="text-sm">Tracking variables…</span>
-                  </div>
-                ) : (
-                  <VariableTracker steps={steps} activeStep={activeStep} />
-                )}
+                <VariableTracker steps={steps} activeStep={activeStep} />
               </TabsContent>
 
               <TabsContent value="complexity" className="flex-1 overflow-hidden m-0">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="text-sm">Analyzing complexity…</span>
-                  </div>
-                ) : (
-                  <ComplexityAnalysis data={complexity} />
-                )}
+                <ComplexityAnalysis data={complexity} />
               </TabsContent>
             </Tabs>
           )}

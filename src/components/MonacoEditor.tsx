@@ -1,5 +1,6 @@
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useRef, useEffect } from "react";
+import { useTheme } from "@/hooks/use-theme";
 
 interface MonacoEditorProps {
   code: string;
@@ -21,10 +22,13 @@ const LANG_MAP: Record<string, string> = {
 
 const MonacoEditor = ({ code, language, onChange, highlightedLines = [] }: MonacoEditorProps) => {
   const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<any[]>([]);
+  const { theme } = useTheme();
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
 
     monaco.editor.defineTheme("codelens-dark", {
       base: "vs-dark",
@@ -46,8 +50,37 @@ const MonacoEditor = ({ code, language, onChange, highlightedLines = [] }: Monac
         "editorCursor.foreground": "#60a5fa",
       },
     });
-    monaco.editor.setTheme("codelens-dark");
+
+    monaco.editor.defineTheme("codelens-light", {
+      base: "vs",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "6b7280", fontStyle: "italic" },
+        { token: "keyword", foreground: "2563eb" },
+        { token: "string", foreground: "059669" },
+        { token: "number", foreground: "d97706" },
+        { token: "type", foreground: "7c3aed" },
+      ],
+      colors: {
+        "editor.background": "#f8fafc",
+        "editor.foreground": "#1e293b",
+        "editor.lineHighlightBackground": "#e0e7ff60",
+        "editorLineNumber.foreground": "#94a3b8",
+        "editorLineNumber.activeForeground": "#2563eb",
+        "editor.selectionBackground": "#bfdbfe60",
+        "editorCursor.foreground": "#2563eb",
+      },
+    });
+
+    monaco.editor.setTheme(theme === "dark" ? "codelens-dark" : "codelens-light");
   };
+
+  // Switch theme when context changes
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.setTheme(theme === "dark" ? "codelens-dark" : "codelens-light");
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -55,14 +88,13 @@ const MonacoEditor = ({ code, language, onChange, highlightedLines = [] }: Monac
     const model = editor.getModel();
     if (!model) return;
 
-    // Clear old decorations
     decorationsRef.current = editor.deltaDecorations(
       decorationsRef.current,
       highlightedLines.map((line) => ({
         range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
         options: {
           isWholeLine: true,
-          className: "highlighted-line",
+          className: "highlighted-line line-glow",
           glyphMarginClassName: "highlighted-glyph",
         },
       }))
@@ -70,7 +102,7 @@ const MonacoEditor = ({ code, language, onChange, highlightedLines = [] }: Monac
   }, [highlightedLines]);
 
   return (
-    <div className="rounded-xl overflow-hidden border border-border h-full">
+    <div className="overflow-hidden border-0 h-full">
       <Editor
         height="100%"
         language={LANG_MAP[language] || "python"}
