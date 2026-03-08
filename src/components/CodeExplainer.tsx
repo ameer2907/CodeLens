@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Play, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp } from "lucide-react";
+import { Loader2, Play, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MonacoEditor from "./MonacoEditor";
