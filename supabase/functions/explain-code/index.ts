@@ -44,7 +44,13 @@ serve(async (req) => {
       "category": "initialization|condition|loop|function|output|return"
     }
   ],
-  "flowchart": "graph TD\\n    A[Start] --> B[Step]\\n    B --> C[End]"
+  "flowchart": "graph TD\\n    A[Start] --> B[Step]\\n    B --> C[End]",
+  "complexity": {
+    "timeComplexity": "O(n)",
+    "spaceComplexity": "O(1)",
+    "explanation": "Brief explanation of why these complexities apply based on the code structure.",
+    "suggestions": ["Suggestion 1 for optimization", "Suggestion 2 for cleaner code"]
+  }
 }
 
 Rules for steps:
@@ -67,7 +73,13 @@ Rules for flowchart:
 - NEVER use special characters like colons semicolons or backticks in labels
 - Keep labels short, max 6 words per node
 - Keep it clean: 5-12 nodes maximum
-- Example: "graph TD\\n    A([Start]) --> B[Initialize variables]\\n    B --> C{Check condition}\\n    C -->|Yes| D[Execute body]\\n    D --> C\\n    C -->|No| E([End])"`
+- Example: "graph TD\\n    A([Start]) --> B[Initialize variables]\\n    B --> C{Check condition}\\n    C -->|Yes| D[Execute body]\\n    D --> C\\n    C -->|No| E([End])"
+
+Rules for complexity:
+- timeComplexity and spaceComplexity should use Big-O notation
+- explanation should be 1-2 sentences explaining the reasoning
+- suggestions should be 1-3 actionable optimization tips or code quality improvements
+- Consider loops, recursion, nested structures, and data structure usage`
           },
           {
             role: "user",
@@ -94,17 +106,16 @@ Rules for flowchart:
     const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content || "";
     
-    // Parse the JSON response, stripping any markdown fences
     let parsed;
     try {
       const cleaned = rawContent.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
       parsed = JSON.parse(cleaned);
     } catch {
-      // Fallback if JSON parsing fails
       parsed = {
         explanation: rawContent,
         steps: [],
-        flowchart: "graph TD\n    A([Start]) --> B([End])"
+        flowchart: "graph TD\n    A([Start]) --> B([End])",
+        complexity: null,
       };
     }
 

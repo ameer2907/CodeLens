@@ -1,15 +1,24 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Play, Terminal, Clock, GitFork, Copy, RotateCcw } from "lucide-react";
+import { Loader2, Play, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MonacoEditor from "./MonacoEditor";
 import ExecutionTimeline, { type ExecutionStep } from "./ExecutionTimeline";
 import FlowchartPanel from "./FlowchartPanel";
 import ExampleSnippets from "./ExampleSnippets";
+import VariableTracker from "./VariableTracker";
+import ComplexityAnalysis from "./ComplexityAnalysis";
 
 const LANGUAGES = ["Python", "JavaScript", "Java", "C++", "TypeScript", "Go", "Rust", "Ruby"];
+
+interface ComplexityData {
+  timeComplexity: string;
+  spaceComplexity: string;
+  explanation: string;
+  suggestions: string[];
+}
 
 const CodeExplainer = () => {
   const [code, setCode] = useState("");
@@ -17,17 +26,21 @@ const CodeExplainer = () => {
   const [explanation, setExplanation] = useState("");
   const [steps, setSteps] = useState<ExecutionStep[]>([]);
   const [flowchart, setFlowchart] = useState("");
+  const [complexity, setComplexity] = useState<ComplexityData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState("explanation");
+  const [activeStep, setActiveStep] = useState(0);
 
   const clearResults = () => {
     setExplanation("");
     setSteps([]);
     setFlowchart("");
+    setComplexity(null);
     setError("");
     setHighlightedLines([]);
+    setActiveStep(0);
   };
 
   const handleExplain = async () => {
@@ -46,6 +59,7 @@ const CodeExplainer = () => {
       setExplanation(data.explanation || "");
       setSteps(data.steps || []);
       setFlowchart(data.flowchart || "");
+      setComplexity(data.complexity || null);
 
       if (data.steps?.length) {
         setActiveTab("timeline");
@@ -57,6 +71,14 @@ const CodeExplainer = () => {
     }
   };
 
+  const handleHighlightLines = useCallback((lines: number[]) => {
+    setHighlightedLines(lines);
+  }, []);
+
+  const handleStepChange = useCallback((stepIdx: number) => {
+    setActiveStep(stepIdx);
+  }, []);
+
   const handleCopy = useCallback(() => {
     const text = [
       explanation,
@@ -64,7 +86,7 @@ const CodeExplainer = () => {
       ...steps.map((s) => `Step ${s.step}: ${s.title}\n${s.description}`),
     ].join("\n");
     navigator.clipboard.writeText(text);
-    toast.success("Explanation copied to clipboard");
+    toast.success("Copied to clipboard");
   }, [explanation, steps]);
 
   const handleExampleSelect = (exCode: string, exLang: string) => {
@@ -76,7 +98,7 @@ const CodeExplainer = () => {
   const hasResults = explanation || steps.length > 0 || flowchart;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-65px)]">
+    <div className="flex flex-col h-[calc(100vh-57px)]">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/30">
         <div className="flex items-center gap-3">
@@ -143,13 +165,13 @@ const CodeExplainer = () => {
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">Paste code & click Explain</h2>
                 <p className="text-sm text-muted-foreground max-w-xs">
-                  Get a step-by-step execution timeline and automatic flowchart visualization
+                  Get step-by-step execution timeline, flowchart, variable tracking, and complexity analysis
                 </p>
               </div>
             </div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-              <TabsList className="w-full justify-start rounded-none border-b border-border bg-card/30 px-2">
+              <TabsList className="w-full justify-start rounded-none border-b border-border bg-card/30 px-2 h-auto flex-wrap">
                 <TabsTrigger value="explanation" className="gap-1.5 text-xs data-[state=active]:bg-background">
                   <Terminal className="w-3.5 h-3.5" /> Explanation
                 </TabsTrigger>
@@ -158,6 +180,12 @@ const CodeExplainer = () => {
                 </TabsTrigger>
                 <TabsTrigger value="flowchart" className="gap-1.5 text-xs data-[state=active]:bg-background">
                   <GitFork className="w-3.5 h-3.5" /> Flowchart
+                </TabsTrigger>
+                <TabsTrigger value="variables" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                  <Variable className="w-3.5 h-3.5" /> Variables
+                </TabsTrigger>
+                <TabsTrigger value="complexity" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                  <TrendingUp className="w-3.5 h-3.5" /> Complexity
                 </TabsTrigger>
               </TabsList>
 
@@ -201,7 +229,11 @@ const CodeExplainer = () => {
                     <span className="text-sm">Building execution timeline…</span>
                   </div>
                 ) : (
-                  <ExecutionTimeline steps={steps} onHighlightLines={setHighlightedLines} />
+                  <ExecutionTimeline
+                    steps={steps}
+                    onHighlightLines={handleHighlightLines}
+                    onStepChange={handleStepChange}
+                  />
                 )}
               </TabsContent>
 
@@ -213,6 +245,28 @@ const CodeExplainer = () => {
                   </div>
                 ) : (
                   <FlowchartPanel chart={flowchart} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="variables" className="flex-1 overflow-hidden m-0">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm">Tracking variables…</span>
+                  </div>
+                ) : (
+                  <VariableTracker steps={steps} activeStep={activeStep} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="complexity" className="flex-1 overflow-hidden m-0">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm">Analyzing complexity…</span>
+                  </div>
+                ) : (
+                  <ComplexityAnalysis data={complexity} />
                 )}
               </TabsContent>
             </Tabs>
