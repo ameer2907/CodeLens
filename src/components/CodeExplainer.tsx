@@ -294,30 +294,30 @@ const CodeExplainer = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-57px)] relative">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/50 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-3">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-all"
-          >
-            {LANGUAGES.map((lang) => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-border bg-card/50 backdrop-blur-sm z-10">
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-all shrink-0"
+        >
+          {LANGUAGES.map((lang) => (
+            <option key={lang} value={lang}>{lang}</option>
+          ))}
+        </select>
+        <div className="hidden sm:flex">
           <ExampleSnippets onSelect={handleExampleSelect} />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 ml-auto shrink-0">
           {hasResults && (
             <>
-              <Button size="sm" variant="ghost" onClick={handleCopy} className="gap-1.5 text-xs">
-                <Copy className="w-3.5 h-3.5" /> Copy
+              <Button size="sm" variant="ghost" onClick={handleCopy} className="gap-1 text-xs px-2">
+                <Copy className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Copy</span>
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleDownloadPDF} className="gap-1.5 text-xs">
-                <Download className="w-3.5 h-3.5" /> PDF
+              <Button size="sm" variant="ghost" onClick={handleDownloadPDF} className="gap-1 text-xs px-2">
+                <Download className="w-3.5 h-3.5" /> <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button size="sm" variant="ghost" onClick={handleExplain} className="gap-1.5 text-xs">
-                <RotateCcw className="w-3.5 h-3.5" /> Regenerate
+              <Button size="sm" variant="ghost" onClick={handleExplain} className="gap-1 text-xs px-2">
+                <RotateCcw className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Regenerate</span>
               </Button>
             </>
           )}
@@ -330,11 +330,11 @@ const CodeExplainer = () => {
             {isLoading ? (
               <motion.div className="flex items-center gap-1.5" animate={{ opacity: [0.5, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}>
                 <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                Analyzing…
+                <span className="hidden sm:inline">Analyzing…</span>
               </motion.div>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5" /> Explain Code
+                <Play className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Explain</span>
               </>
             )}
           </Button>
