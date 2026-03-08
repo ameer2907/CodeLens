@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import CodeExplainer from "@/components/CodeExplainer";
 
-const Index = () => {
+const Playground = () => {
   return (
     <div className="h-screen flex flex-col bg-background">
       <Navbar />
@@ -10,4 +10,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Playground;
