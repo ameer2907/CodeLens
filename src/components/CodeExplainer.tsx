@@ -363,109 +363,198 @@ const CodeExplainer = () => {
             {isLoading ? (
               <LoadingAnalysis />
             ) : !hasResults ? (
-              <div className="flex-1 flex items-center justify-center p-8 relative overflow-hidden">
-                {/* Colorful ambient blobs for empty state */}
+              <div className="flex-1 flex flex-col items-center justify-start p-6 pt-10 relative overflow-hidden">
+                {/* ── Background layers ── */}
+                {/* Ambient gradient blobs */}
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
-                  style={{ width: 300, height: 300, top: "5%", right: "5%", background: "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)", filter: "blur(50px)" }}
-                  animate={{ x: [0, 15, -10, 0], y: [0, -12, 8, 0], scale: [1, 1.05, 0.96, 1] }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ width: 340, height: 340, top: "-5%", right: "-2%", background: "radial-gradient(circle, hsl(var(--primary) / 0.10) 0%, transparent 70%)", filter: "blur(55px)" }}
+                  animate={{ x: [0, 18, -12, 0], y: [0, -15, 10, 0], scale: [1, 1.06, 0.95, 1] }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
-                  style={{ width: 250, height: 250, bottom: "10%", left: "8%", background: "radial-gradient(circle, hsl(var(--accent) / 0.10) 0%, transparent 70%)", filter: "blur(45px)" }}
-                  animate={{ x: [0, -12, 8, 0], y: [0, 10, -15, 0] }}
-                  transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                  style={{ width: 280, height: 280, bottom: "5%", left: "5%", background: "radial-gradient(circle, hsl(var(--accent) / 0.08) 0%, transparent 70%)", filter: "blur(50px)" }}
+                  animate={{ x: [0, -10, 14, 0], y: [0, 12, -10, 0] }}
+                  transition={{ duration: 24, repeat: Infinity, ease: "easeInOut", delay: 4 }}
                 />
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
-                  style={{ width: 200, height: 200, top: "40%", left: "50%", background: "radial-gradient(circle, hsl(var(--step-loop) / 0.08) 0%, transparent 70%)", filter: "blur(40px)" }}
-                  animate={{ x: [0, 10, -8, 0], y: [0, -8, 12, 0], scale: [1, 1.08, 0.95, 1] }}
-                  transition={{ duration: 16, repeat: Infinity, ease: "easeInOut", delay: 6 }}
+                  style={{ width: 200, height: 200, top: "35%", left: "45%", background: "radial-gradient(circle, hsl(var(--step-loop) / 0.06) 0%, transparent 70%)", filter: "blur(40px)" }}
+                  animate={{ x: [0, 8, -6, 0], y: [0, -10, 8, 0], scale: [1, 1.07, 0.94, 1] }}
+                  transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 7 }}
                 />
+
+                {/* Faint grid overlay */}
+                <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
 
                 {/* Floating code symbols */}
                 {[
-                  { char: "{}", x: "15%", y: "20%", delay: 0 },
-                  { char: "//", x: "78%", y: "25%", delay: 1.5 },
-                  { char: "=>", x: "22%", y: "72%", delay: 3 },
-                  { char: "[]", x: "75%", y: "70%", delay: 2 },
-                  { char: "()", x: "55%", y: "15%", delay: 4 },
+                  { char: "{}", x: "12%", y: "18%", delay: 0, size: 16 },
+                  { char: "//", x: "82%", y: "22%", delay: 1.5, size: 14 },
+                  { char: "=>", x: "18%", y: "76%", delay: 3, size: 13 },
+                  { char: "[]", x: "78%", y: "72%", delay: 2, size: 15 },
+                  { char: "()", x: "50%", y: "12%", delay: 4, size: 12 },
+                  { char: "< />", x: "88%", y: "50%", delay: 5, size: 11 },
                 ].map((sym, i) => (
                   <motion.span
                     key={i}
-                    className="absolute font-mono text-primary/[0.07] text-lg pointer-events-none select-none"
-                    style={{ left: sym.x, top: sym.y }}
-                    animate={{ y: [0, -10, 0], opacity: [0.05, 0.12, 0.05] }}
-                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: sym.delay }}
+                    className="absolute font-mono text-primary/[0.06] pointer-events-none select-none"
+                    style={{ left: sym.x, top: sym.y, fontSize: sym.size }}
+                    animate={{ y: [0, -12, 0], opacity: [0.04, 0.10, 0.04] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: sym.delay }}
                   >
                     {sym.char}
                   </motion.span>
                 ))}
 
+                {/* ── Main illustration: AI avatar + mini code card ── */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6 }}
-                  className="text-center space-y-5 relative z-10"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7 }}
+                  className="relative z-10 flex flex-col items-center w-full max-w-sm"
                 >
-                  {/* AI avatar with glow */}
-                  <div className="relative mx-auto w-20 h-20">
+                  {/* Illustration group */}
+                  <div className="relative w-full mb-6">
+                    {/* AI Avatar floating */}
                     <motion.div
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                      className="relative"
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute -top-3 left-[15%] z-20"
                     >
                       <motion.div
                         animate={{ boxShadow: [
-                          "0 0 20px hsl(var(--primary) / 0.1), 0 0 40px hsl(var(--primary) / 0.05)",
-                          "0 0 30px hsl(var(--primary) / 0.2), 0 0 60px hsl(var(--primary) / 0.1)",
-                          "0 0 20px hsl(var(--primary) / 0.1), 0 0 40px hsl(var(--primary) / 0.05)",
+                          "0 0 16px hsl(var(--primary) / 0.08), 0 4px 24px hsl(var(--primary) / 0.04)",
+                          "0 0 24px hsl(var(--primary) / 0.16), 0 4px 32px hsl(var(--primary) / 0.08)",
+                          "0 0 16px hsl(var(--primary) / 0.08), 0 4px 24px hsl(var(--primary) / 0.04)",
                         ]}}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 border border-primary/20 backdrop-blur-sm flex items-center justify-center"
+                        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/25 backdrop-blur-sm flex items-center justify-center"
                       >
-                        <Bot className="w-10 h-10 text-primary" />
+                        <Bot className="w-6 h-6 text-primary" />
                       </motion.div>
-                      {/* Pulse ring */}
                       <motion.div
-                        className="absolute inset-0 rounded-2xl border-2 border-primary/15"
-                        animate={{ scale: [1, 1.35, 1.35], opacity: [0.5, 0, 0] }}
-                        transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+                        className="absolute inset-0 rounded-xl border border-primary/15"
+                        animate={{ scale: [1, 1.4, 1.4], opacity: [0.4, 0, 0] }}
+                        transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
                       />
+                      {/* Connection line from avatar to code card */}
+                      <motion.div
+                        className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-px h-5"
+                        style={{ background: "linear-gradient(to bottom, hsl(var(--primary) / 0.25), transparent)" }}
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: 1 }}
+                        transition={{ delay: 0.5, duration: 0.4 }}
+                      />
+                    </motion.div>
+
+                    {/* Mini code card */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                      className="ml-auto mr-4 w-[75%] rounded-lg border border-border/70 bg-card/70 backdrop-blur-sm shadow-lg overflow-hidden"
+                    >
+                      {/* Title bar */}
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/40 border-b border-border/50">
+                        <span className="w-2 h-2 rounded-full bg-destructive/50" />
+                        <span className="w-2 h-2 rounded-full bg-muted-foreground/25" />
+                        <span className="w-2 h-2 rounded-full bg-accent/40" />
+                        <span className="ml-1.5 text-[9px] text-muted-foreground/60 font-mono">your_code.py</span>
+                      </div>
+                      {/* Animated code lines */}
+                      <div className="px-3 py-2.5 space-y-1">
+                        {[
+                          { text: "def solve(data):", delay: 0.5, kw: "def" },
+                          { text: "    for item in data:", delay: 0.7, kw: "for", indent: 1 },
+                          { text: "        if valid(item):", delay: 0.9, kw: "if", indent: 2 },
+                          { text: "            result.add(item)", delay: 1.1, indent: 3 },
+                          { text: "    return result", delay: 1.3, kw: "return", indent: 1 },
+                        ].map((line, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -4 }}
+                            animate={{ opacity: 0.7, x: 0 }}
+                            transition={{ delay: line.delay, duration: 0.3 }}
+                            className="font-mono text-[10px] text-foreground/50 leading-tight"
+                            style={{ paddingLeft: (line.indent || 0) * 10 }}
+                          >
+                            {line.kw ? (
+                              <>
+                                <span className="text-primary/70">{line.kw}</span>
+                                {line.text.replace(line.kw, "")}
+                              </>
+                            ) : line.text}
+                          </motion.div>
+                        ))}
+                        <motion.span
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: [0, 0.6, 0] }}
+                          transition={{ delay: 1.5, duration: 1, repeat: Infinity }}
+                          className="inline-block w-[5px] h-[10px] bg-primary/40 rounded-[1px] ml-[10px]"
+                        />
+                      </div>
+                    </motion.div>
+
+                    {/* AI speech bubble pointing at code */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      transition={{ delay: 1.6, duration: 0.5 }}
+                      className="absolute bottom-1 left-[8%] z-10"
+                    >
+                      <div className="bg-card/90 backdrop-blur-sm border border-primary/20 rounded-lg rounded-tl-sm px-2.5 py-1.5 shadow-md max-w-[140px]">
+                        <p className="text-[9px] text-muted-foreground leading-snug flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
+                          <span>Let me walk you through this…</span>
+                        </p>
+                      </div>
                     </motion.div>
                   </div>
 
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {/* ── Text content ── */}
+                  <div className="text-center space-y-3 mt-2">
+                    <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                       Paste code & click Explain
                     </h2>
-                    <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                      Your AI tutor will walk you through every line with animations, flowcharts, and insights
+                    <p className="text-[13px] text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
+                      Your AI tutor will guide you through every line with step-by-step animations and visual insights
                     </p>
                   </div>
 
                   {/* Feature pills */}
                   <motion.div
-                    initial={{ opacity: 0, y: 8 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="flex items-center justify-center gap-2 flex-wrap"
+                    transition={{ delay: 0.6 }}
+                    className="flex items-center justify-center gap-2 flex-wrap mt-5"
                   >
                     {[
-                      { icon: Zap, label: "Walkthrough", color: "primary" },
-                      { icon: GitFork, label: "Flowchart", color: "accent" },
-                      { icon: TrendingUp, label: "Complexity", color: "primary" },
+                      { icon: Zap, label: "Walkthrough" },
+                      { icon: GitFork, label: "Flowchart" },
+                      { icon: Variable, label: "Variables" },
+                      { icon: TrendingUp, label: "Complexity" },
                     ].map((item) => (
                       <span
                         key={item.label}
-                        className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-card/80 border border-border/60 text-muted-foreground"
+                        className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full bg-card/70 border border-border/50 text-muted-foreground/80 backdrop-blur-sm"
                       >
-                        <item.icon className="w-3 h-3 text-primary" />
+                        <item.icon className="w-2.5 h-2.5 text-primary/70" />
                         {item.label}
                       </span>
                     ))}
                   </motion.div>
+
+                  {/* Keyboard shortcut hint */}
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                    className="text-[10px] text-muted-foreground/40 mt-6 flex items-center gap-1.5"
+                  >
+                    Pick an example above or paste your own code
+                  </motion.p>
                 </motion.div>
               </div>
             ) : (
