@@ -7,8 +7,9 @@ const Playground = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background relative">
-      {/* Subtle ambient glow behind editor area */}
+      {/* Layered ambient background */}
       <div className={`absolute inset-0 pointer-events-none ${theme === "dark" ? "bg-ambient-dark" : "bg-ambient-light"}`} />
+      <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
       <div className="relative z-10 flex flex-col h-full">
         <Navbar />
         <CodeExplainer />

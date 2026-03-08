@@ -127,16 +127,18 @@
   /* ---- Ambient backgrounds ---- */
   .bg-ambient-light {
     background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, hsl(217 91% 90% / 0.5), transparent),
-      radial-gradient(ellipse 60% 50% at 80% 80%, hsl(142 71% 90% / 0.3), transparent),
-      linear-gradient(180deg, hsl(220 20% 97%) 0%, hsl(220 20% 94%) 100%);
+      radial-gradient(ellipse 90% 60% at 20% 10%, hsl(217 91% 92% / 0.6), transparent),
+      radial-gradient(ellipse 50% 40% at 75% 75%, hsl(142 71% 92% / 0.3), transparent),
+      radial-gradient(ellipse 60% 50% at 50% 40%, hsl(220 14% 96% / 0.8), transparent),
+      linear-gradient(180deg, hsl(220 20% 98%) 0%, hsl(220 20% 94%) 100%);
   }
 
   .bg-ambient-dark {
     background:
-      radial-gradient(ellipse 80% 60% at 15% 5%, hsl(217 91% 20% / 0.6), transparent),
-      radial-gradient(ellipse 60% 50% at 85% 85%, hsl(270 70% 15% / 0.4), transparent),
-      radial-gradient(circle at 50% 50%, hsl(222 47% 9%) 0%, hsl(222 47% 5%) 100%);
+      radial-gradient(ellipse 80% 60% at 15% 5%, hsl(217 91% 18% / 0.5), transparent),
+      radial-gradient(ellipse 50% 40% at 80% 80%, hsl(270 70% 15% / 0.35), transparent),
+      radial-gradient(ellipse 70% 50% at 50% 50%, hsl(222 47% 8% / 0.9), transparent),
+      radial-gradient(circle at 50% 50%, hsl(222 47% 8%) 0%, hsl(222 47% 4%) 100%);
   }
 
   .bg-grid-pattern {
