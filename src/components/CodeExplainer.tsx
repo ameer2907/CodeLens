@@ -164,6 +164,9 @@ const CodeExplainer = () => {
               <Button size="sm" variant="ghost" onClick={handleCopy} className="gap-1.5 text-xs">
                 <Copy className="w-3.5 h-3.5" /> Copy
               </Button>
+              <Button size="sm" variant="ghost" onClick={handleDownloadPDF} className="gap-1.5 text-xs">
+                <Download className="w-3.5 h-3.5" /> PDF
+              </Button>
               <Button size="sm" variant="ghost" onClick={handleExplain} className="gap-1.5 text-xs">
                 <RotateCcw className="w-3.5 h-3.5" /> Regenerate
               </Button>
