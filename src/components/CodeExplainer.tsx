@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Pause, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download, Bot, Code2, Repeat, GitBranch, Zap, Monitor, ArrowLeftRight, SkipForward, SkipBack, Gauge } from "lucide-react";
+import { Play, Pause, Terminal, Clock, GitFork, Copy, RotateCcw, Variable, TrendingUp, Download, Bot, Code2, Repeat, GitBranch, Zap, Monitor, ArrowLeftRight, SkipForward, SkipBack, Gauge, Sparkles, Braces, Hash, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
