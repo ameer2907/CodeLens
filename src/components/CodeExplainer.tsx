@@ -89,6 +89,51 @@ const CodeExplainer = () => {
     toast.success("Copied to clipboard");
   }, [explanation, steps]);
 
+  const handleDownloadPDF = useCallback(() => {
+    const win = window.open("", "_blank");
+    if (!win) { toast.error("Popup blocked"); return; }
+
+    const sections: string[] = [];
+    sections.push(`<h1 style="color:#60a5fa;">CodeLens Analysis</h1>`);
+    sections.push(`<p style="color:#94a3b8;"><strong>Language:</strong> ${language}</p>`);
+    sections.push(`<h2>Code</h2><pre style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;">${code.replace(/</g,"&lt;")}</pre>`);
+
+    if (explanation) {
+      sections.push(`<h2>Explanation</h2><p style="white-space:pre-wrap;">${explanation.replace(/</g,"&lt;")}</p>`);
+    }
+
+    if (steps.length > 0) {
+      sections.push(`<h2>Execution Steps</h2>`);
+      steps.forEach((s) => {
+        const vars = s.variables ? Object.entries(s.variables).map(([k,v]) => `<code>${k} = ${v}</code>`).join(", ") : "";
+        sections.push(`<div style="margin-bottom:12px;padding:12px;background:#1e293b;border-radius:8px;border-left:3px solid #60a5fa;">
+          <strong style="color:#60a5fa;">Step ${s.step}:</strong> <strong>${s.title}</strong> <span style="color:#94a3b8;font-size:12px;">[Line ${s.line}]</span>
+          <p style="margin:4px 0 0;color:#cbd5e1;">${s.description}</p>
+          ${vars ? `<p style="margin:4px 0 0;font-size:12px;color:#94a3b8;">Variables: ${vars}</p>` : ""}
+        </div>`);
+      });
+    }
+
+    if (complexity) {
+      sections.push(`<h2>Complexity Analysis</h2>
+        <p><strong>Time:</strong> ${complexity.timeComplexity} &nbsp; <strong>Space:</strong> ${complexity.spaceComplexity}</p>
+        <p>${complexity.explanation}</p>`);
+      if (complexity.suggestions?.length) {
+        sections.push(`<h3>Optimization Suggestions</h3><ul>${complexity.suggestions.map(s => `<li>${s}</li>`).join("")}</ul>`);
+      }
+    }
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>CodeLens Analysis</title>
+      <style>body{font-family:system-ui,sans-serif;max-width:800px;margin:0 auto;padding:40px;background:#0f172a;color:#e2e8f0;}
+      h1{border-bottom:2px solid #1e293b;padding-bottom:8px;}h2{color:#60a5fa;margin-top:24px;}
+      code{background:#334155;padding:2px 6px;border-radius:4px;font-size:13px;}</style>
+    </head><body>${sections.join("")}</body></html>`;
+
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => { win.print(); }, 500);
+  }, [code, language, explanation, steps, complexity]);
+
   const handleExampleSelect = (exCode: string, exLang: string) => {
     setCode(exCode);
     setLanguage(exLang);
