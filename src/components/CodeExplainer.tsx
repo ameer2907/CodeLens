@@ -15,6 +15,15 @@ import LoadingAnalysis from "./LoadingAnalysis";
 
 const LANGUAGES = ["Python", "JavaScript", "Java", "C++", "TypeScript", "Go", "Rust", "Ruby"];
 
+const CATEGORY_ICONS: Record<string, string> = {
+  initialization: "🔵",
+  condition: "🟡",
+  loop: "🟣",
+  function: "🔷",
+  output: "🟢",
+  return: "🔴",
+};
+
 interface ComplexityData {
   timeComplexity: string;
   spaceComplexity: string;
@@ -36,7 +45,6 @@ const CodeExplainer = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [revealedSteps, setRevealedSteps] = useState(0);
 
-  // Pick up example from sessionStorage (from Examples page)
   useEffect(() => {
     const stored = sessionStorage.getItem("codelens-example");
     if (stored) {
@@ -78,7 +86,7 @@ const CodeExplainer = () => {
       setFlowchart(data.flowchart || "");
       setComplexity(data.complexity || null);
 
-      // Animate step reveal
+      // Animated step reveal
       if (data.steps?.length) {
         setActiveTab("timeline");
         let i = 0;
@@ -86,7 +94,11 @@ const CodeExplainer = () => {
           i++;
           setRevealedSteps(i);
           if (i >= data.steps.length) clearInterval(revealInterval);
-        }, 200);
+        }, 150);
+        // Highlight first step
+        if (data.steps[0]?.lines) {
+          setHighlightedLines(data.steps[0].lines);
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to get explanation. Please try again.");
@@ -167,14 +179,14 @@ const CodeExplainer = () => {
   const hasResults = explanation || steps.length > 0 || flowchart;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-57px)]">
+    <div className="flex flex-col h-[calc(100vh-57px)] relative">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/30">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/50 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3">
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
+            className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-2 focus:ring-primary focus:outline-none transition-all"
           >
             {LANGUAGES.map((lang) => (
               <option key={lang} value={lang}>{lang}</option>
@@ -218,127 +230,155 @@ const CodeExplainer = () => {
 
       {/* Split layout */}
       <div className="flex flex-1 min-h-0">
-        {/* Left: Editor */}
-        <div className="w-1/2 border-r border-border">
-          <MonacoEditor
-            code={code}
-            language={language}
-            onChange={(v) => { setCode(v); clearResults(); }}
-            highlightedLines={highlightedLines}
-          />
+        {/* Left: Editor with subtle glow behind */}
+        <div className="w-1/2 border-r border-border relative">
+          <div className="absolute inset-0 bg-mesh-gradient pointer-events-none" />
+          <div className="relative z-10 h-full">
+            <MonacoEditor
+              code={code}
+              language={language}
+              onChange={(v) => { setCode(v); clearResults(); }}
+              highlightedLines={highlightedLines}
+            />
+          </div>
         </div>
 
         {/* Right: Results */}
-        <div className="w-1/2 flex flex-col min-h-0">
-          {isLoading ? (
-            <LoadingAnalysis />
-          ) : !hasResults ? (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center space-y-3"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                  <Terminal className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-lg font-semibold text-foreground">Paste code & click Explain</h2>
-                <p className="text-sm text-muted-foreground max-w-xs">
-                  Get step-by-step execution timeline, flowchart, variable tracking, and complexity analysis
-                </p>
-              </motion.div>
-            </div>
-          ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-              <TabsList className="w-full justify-start rounded-none border-b border-border bg-card/30 px-2 h-auto flex-wrap">
-                <TabsTrigger value="explanation" className="gap-1.5 text-xs data-[state=active]:bg-background">
-                  <Terminal className="w-3.5 h-3.5" /> Explanation
-                </TabsTrigger>
-                <TabsTrigger value="timeline" className="gap-1.5 text-xs data-[state=active]:bg-background">
-                  <Clock className="w-3.5 h-3.5" /> Timeline
-                </TabsTrigger>
-                <TabsTrigger value="flowchart" className="gap-1.5 text-xs data-[state=active]:bg-background">
-                  <GitFork className="w-3.5 h-3.5" /> Flowchart
-                </TabsTrigger>
-                <TabsTrigger value="variables" className="gap-1.5 text-xs data-[state=active]:bg-background">
-                  <Variable className="w-3.5 h-3.5" /> Variables
-                </TabsTrigger>
-                <TabsTrigger value="complexity" className="gap-1.5 text-xs data-[state=active]:bg-background">
-                  <TrendingUp className="w-3.5 h-3.5" /> Complexity
-                </TabsTrigger>
-              </TabsList>
+        <div className="w-1/2 flex flex-col min-h-0 relative">
+          <div className="absolute inset-0 bg-mesh-gradient pointer-events-none" />
+          <div className="relative z-10 flex flex-col flex-1 min-h-0">
+            {isLoading ? (
+              <LoadingAnalysis />
+            ) : !hasResults ? (
+              <div className="flex-1 flex items-center justify-center p-8">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center space-y-3"
+                >
+                  <motion.div
+                    animate={{ y: [0, -6, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
+                  >
+                    <Terminal className="w-8 h-8 text-primary" />
+                  </motion.div>
+                  <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Paste code & click Explain
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    Get step-by-step execution timeline, flowchart, variable tracking, and complexity analysis
+                  </p>
+                </motion.div>
+              </div>
+            ) : (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+                <TabsList className="w-full justify-start rounded-none border-b border-border bg-card/50 backdrop-blur-sm px-2 h-auto flex-wrap">
+                  <TabsTrigger value="explanation" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <Terminal className="w-3.5 h-3.5" /> Explanation
+                  </TabsTrigger>
+                  <TabsTrigger value="timeline" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <Clock className="w-3.5 h-3.5" /> Timeline
+                  </TabsTrigger>
+                  <TabsTrigger value="flowchart" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <GitFork className="w-3.5 h-3.5" /> Flowchart
+                  </TabsTrigger>
+                  <TabsTrigger value="variables" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <Variable className="w-3.5 h-3.5" /> Variables
+                  </TabsTrigger>
+                  <TabsTrigger value="complexity" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <TrendingUp className="w-3.5 h-3.5" /> Complexity
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="explanation" className="flex-1 overflow-y-auto m-0">
-                <div className="p-6">
-                  {error && <p className="text-destructive text-sm">{error}</p>}
-                  {explanation && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="terminal-panel rounded-xl p-5"
-                    >
-                      <pre className="text-sm text-foreground whitespace-pre-wrap leading-relaxed font-mono">
-                        {explanation}
-                      </pre>
-                    </motion.div>
-                  )}
-                  {steps.length > 0 && (
-                    <div className="mt-6 space-y-3">
-                      <h3 className="text-sm font-medium text-muted-foreground">Detailed Steps</h3>
-                      <AnimatePresence>
-                        {steps.map((s, i) => (
-                          <motion.div
-                            key={s.step}
-                            initial={{ opacity: 0, y: 16, scale: 0.97 }}
-                            animate={{ opacity: i < revealedSteps || revealedSteps >= steps.length ? 1 : 0, y: 0, scale: 1 }}
-                            transition={{ duration: 0.4, delay: i * 0.05 }}
-                            className="terminal-panel rounded-lg p-4 hover:border-primary/30 transition-all cursor-pointer"
-                            onClick={() => handleHighlightLines(s.lines)}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-mono text-primary">Step {s.step}</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{s.category}</span>
-                              <span className="text-xs font-medium text-foreground">{s.title}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
-                            {Object.keys(s.variables).length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                {Object.entries(s.variables).map(([k, v]) => (
-                                  <span key={k} className="text-[11px] font-mono px-2 py-0.5 rounded bg-primary/10 text-primary">
-                                    {k} = {v}
-                                  </span>
-                                ))}
+                <TabsContent value="explanation" className="flex-1 overflow-y-auto m-0">
+                  <div className="p-6 space-y-5">
+                    {error && <p className="text-destructive text-sm">{error}</p>}
+                    {explanation && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass-card rounded-xl p-5"
+                      >
+                        <pre className="text-sm text-foreground whitespace-pre-wrap leading-relaxed font-mono">
+                          {explanation}
+                        </pre>
+                      </motion.div>
+                    )}
+                    {steps.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Execution Steps
+                        </h3>
+                        <AnimatePresence>
+                          {steps.map((s, i) => (
+                            <motion.div
+                              key={s.step}
+                              initial={{ opacity: 0, x: -20, scale: 0.97 }}
+                              animate={{
+                                opacity: i < revealedSteps || revealedSteps >= steps.length ? 1 : 0,
+                                x: 0,
+                                scale: 1,
+                              }}
+                              transition={{ duration: 0.5, delay: i * 0.06, ease: "easeOut" }}
+                              className={`rounded-xl border p-4 cursor-pointer transition-all duration-300 step-indicator-${s.category} ${
+                                i === activeStep
+                                  ? "border-primary/40 bg-primary/5 step-active-pulse"
+                                  : "border-border bg-card/30 hover:bg-card/60"
+                              }`}
+                              onClick={() => {
+                                handleHighlightLines(s.lines);
+                                setActiveStep(i);
+                              }}
+                            >
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className={`w-2.5 h-2.5 rounded-full step-dot-${s.category}`} />
+                                <span className="text-xs font-mono text-muted-foreground">Step {s.step}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium step-dot-${s.category} text-primary-foreground`}>
+                                  {s.category}
+                                </span>
+                                <span className="text-xs font-semibold text-foreground">{s.title}</span>
                               </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
+                              <p className="text-xs text-muted-foreground leading-relaxed pl-5">{s.description}</p>
+                              {Object.keys(s.variables).length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5 pl-5">
+                                  {Object.entries(s.variables).map(([k, v]) => (
+                                    <span key={k} className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                                      {k} = {v}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="timeline" className="flex-1 overflow-hidden m-0">
-                <ExecutionTimeline
-                  steps={steps}
-                  onHighlightLines={handleHighlightLines}
-                  onStepChange={handleStepChange}
-                />
-              </TabsContent>
+                <TabsContent value="timeline" className="flex-1 overflow-hidden m-0">
+                  <ExecutionTimeline
+                    steps={steps}
+                    onHighlightLines={handleHighlightLines}
+                    onStepChange={handleStepChange}
+                  />
+                </TabsContent>
 
-              <TabsContent value="flowchart" className="flex-1 overflow-hidden m-0">
-                <FlowchartPanel chart={flowchart} />
-              </TabsContent>
+                <TabsContent value="flowchart" className="flex-1 overflow-hidden m-0">
+                  <FlowchartPanel chart={flowchart} activeNodeIndex={activeStep} />
+                </TabsContent>
 
-              <TabsContent value="variables" className="flex-1 overflow-hidden m-0">
-                <VariableTracker steps={steps} activeStep={activeStep} />
-              </TabsContent>
+                <TabsContent value="variables" className="flex-1 overflow-hidden m-0">
+                  <VariableTracker steps={steps} activeStep={activeStep} />
+                </TabsContent>
 
-              <TabsContent value="complexity" className="flex-1 overflow-hidden m-0">
-                <ComplexityAnalysis data={complexity} />
-              </TabsContent>
-            </Tabs>
-          )}
+                <TabsContent value="complexity" className="flex-1 overflow-hidden m-0">
+                  <ComplexityAnalysis data={complexity} />
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
         </div>
       </div>
     </div>
